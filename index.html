@@ -603,6 +603,22 @@
             color: #60a5fa;
             margin-bottom: 10px;
         }
+        
+        .url-key-notice {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: #93c5fd;
+            display: none;
+        }
+        
+        .url-key-notice i {
+            color: #3b82f6;
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
@@ -662,6 +678,12 @@
                             <i class="fas fa-key"></i> Активировать
                         </button>
                     </div>
+                    
+                    <div id="urlKeyNotice" class="url-key-notice">
+                        <i class="fas fa-link"></i>
+                        <span id="urlKeyMessage"></span>
+                    </div>
+                    
                     <div class="warning">
                         <i class="fas fa-exclamation-triangle"></i>
                         Внимание! Использование читов может привести к блокировке аккаунта. Используйте на свой страх и риск.
@@ -796,6 +818,8 @@
         const productExpiry = document.getElementById('productExpiry');
         const activatedProducts = document.getElementById('activatedProducts');
         const activatedList = document.getElementById('activatedList');
+        const urlKeyNotice = document.getElementById('urlKeyNotice');
+        const urlKeyMessage = document.getElementById('urlKeyMessage');
         
         const productCards = document.querySelectorAll('.product-card');
         const productModal = document.getElementById('productModal');
@@ -859,22 +883,22 @@
         // Хранилище активированных читов
         let activatedCheatsList = JSON.parse(localStorage.getItem('activatedCheats')) || [];
 
-        // Инициализация - показать уже активированные читы
-        updateActivatedCheatsDisplay();
+        // Функция для получения параметров из URL
+        function getUrlParameter(name) {
+            name = name.replace(/[\[\]]/g, '\\$&');
+            const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+            const results = regex.exec(window.location.href);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
 
-        // Активация ключа
-        activateBtn.addEventListener('click', activateKey);
-        keyInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') activateKey();
-        });
-
-        function activateKey() {
-            const key = keyInput.value.trim();
-            
+        // Функция для активации ключа
+        function activateKeyFromInput(key) {
             // Проверка формата ключа
             if (!key) {
                 showActivationStatus('error', 'Ошибка', 'Пожалуйста, введите ключ');
-                return;
+                return false;
             }
             
             // Проверка валидности ключа
@@ -919,12 +943,58 @@
                 productInfo.style.display = 'block';
                 
                 // Очистить поле ввода
-                keyInput.value = '';
+                if (keyInput) keyInput.value = '';
+                
+                return true;
             } else {
                 showActivationStatus('error', 'Неверный ключ', 'Введенный ключ недействителен или уже был использован. Пожалуйста, проверьте правильность ввода.');
                 productInfo.style.display = 'none';
+                return false;
             }
         }
+
+        // Проверка ключа из URL при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Инициализация - показать уже активированные читы
+            updateActivatedCheatsDisplay();
+            
+            // Проверяем наличие ключа в URL
+            const urlKey = getUrlParameter('key');
+            if (urlKey) {
+                // Заполняем поле ввода
+                if (keyInput) {
+                    keyInput.value = urlKey;
+                }
+                
+                // Показываем уведомление
+                urlKeyNotice.style.display = 'block';
+                urlKeyMessage.textContent = `Обнаружен ключ в URL. Нажмите "Активировать" для активации ключа: ${urlKey}`;
+                
+                // Автоматически активируем ключ
+                setTimeout(() => {
+                    activateKeyFromInput(urlKey);
+                    // Скрываем уведомление после успешной активации
+                    setTimeout(() => {
+                        if (activationStatus.classList.contains('status-success')) {
+                            urlKeyNotice.style.display = 'none';
+                        }
+                    }, 3000);
+                }, 1000);
+            }
+        });
+
+        // Активация ключа по клику
+        activateBtn.addEventListener('click', function() {
+            const key = keyInput.value.trim();
+            activateKeyFromInput(key);
+        });
+        
+        keyInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const key = keyInput.value.trim();
+                activateKeyFromInput(key);
+            }
+        });
 
         function showActivationStatus(type, title, message) {
             // Сброс стилей
@@ -1052,6 +1122,19 @@
                 // window.location.href = `https://fanpay.ru/buy?cheat=${cheatId}`;
             });
         });
+        
+        // Функция для создания ссылки с ключом
+        function createShareableLink(key) {
+            if (!key || !validKeys[key]) return '';
+            
+            const currentUrl = window.location.href.split('?')[0];
+            return `${currentUrl}?key=${encodeURIComponent(key)}`;
+        }
+        
+        // Можно добавить кнопку для копирования ссылки с ключом (опционально)
+        function addShareButton() {
+            // Эта функция может быть добавлена для создания кнопки "Поделиться ссылкой"
+        }
     </script>
 </body>
 </html>

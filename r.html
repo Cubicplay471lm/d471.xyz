@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Прогноз клёва леща — Нева, Санкт-Петербург</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(145deg, #cfe3f9 0%, #b0c8e8 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1a2c3e;
+        }
+
+        /* контейнер с эффектом карты/льда */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* карточка погоды */
+        .weather-panel {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(2px);
+            border-radius: 48px;
+            padding: 24px 28px;
+            margin-bottom: 28px;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255,255,240,0.7);
+        }
+
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            border-bottom: 2px solid #2c6e9e30;
+            padding-bottom: 14px;
+            margin-bottom: 24px;
+        }
+
+        h1 span {
+            background: #1e4a6b;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: normal;
+            padding: 6px 16px;
+            border-radius: 60px;
+            letter-spacing: 0.3px;
+        }
+
+        .location-badge {
+            background: #eef4ff;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #155f8c;
+            margin-bottom: 16px;
+        }
+
+        .factors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            margin: 28px 0 20px;
+        }
+
+        .factor-card {
+            background: #f0f6fe;
+            border-radius: 32px;
+            padding: 18px 14px;
+            text-align: center;
+            transition: all 0.2s ease;
+            border: 1px solid #cbddee;
+        }
+
+        .factor-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #2b6c9e;
+            margin-bottom: 10px;
+        }
+
+        .factor-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #0a2f44;
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+
+        .factor-unit {
+            font-size: 0.85rem;
+            font-weight: normal;
+            color: #4b6f8c;
+        }
+
+        .trend-icon {
+            font-size: 1.4rem;
+            display: inline-block;
+            margin-left: 6px;
+        }
+
+        .verdict-block {
+            background: #1e3a4d;
+            border-radius: 44px;
+            padding: 24px 28px;
+            margin-top: 20px;
+            color: white;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .bite-score {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .score-number {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: #ffcd7e;
+            color: #1e3a4d;
+            padding: 5px 20px;
+            border-radius: 60px;
+            line-height: 1;
+        }
+
+        .score-text {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .advice {
+            font-size: 1.1rem;
+            background: rgba(255,255,210,0.15);
+            padding: 10px 22px;
+            border-radius: 50px;
+            font-weight: 500;
+        }
+
+        /* секция с настройкой параметров + описание */
+        .input-section {
+            background: white;
+            border-radius: 44px;
+            padding: 24px 28px;
+            margin-top: 20px;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+        }
+
+        .slider-group {
+            margin-bottom: 28px;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1f5e85;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #cbe0f0;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        input[type="range"]:focus {
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #2c7cb6;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border: none;
+        }
+
+        .flex-2cols {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            margin-top: 18px;
+            justify-content: space-between;
+        }
+
+        .info-text {
+            background: #eef2f7;
+            border-radius: 28px;
+            padding: 18px 22px;
+            font-size: 0.9rem;
+            line-height: 1.45;
+            color: #2c4e6e;
+            margin-top: 20px;
+            border-left: 5px solid #ffb74d;
+        }
+
+        button {
+            background: #ffb74d;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 44px;
+            font-weight: bold;
+            font-size: 1rem;
+            color: #1e3a4d;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 12px;
+            width: 100%;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: #ffa01e;
+            transform: scale(0.98);
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.75rem;
+            color: #2c577c;
+        }
+
+        @media (max-width: 650px) {
+            .weather-panel, .input-section {
+                padding: 18px;
+            }
+            .factor-value {
+                font-size: 1.7rem;
+            }
+            .verdict-block {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        .good {
+            border-left: 8px solid #2ecc71;
+        }
+        .normal {
+            border-left: 8px solid #f39c12;
+        }
+        .bad {
+            border-left: 8px solid #e67e22;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Основной блок погоды (реальные данные от Open-Meteo, но с возможностью ручной правки) -->
+    <div class="weather-panel" id="weatherPanel">
+        <div class="location-badge">
+            📍 р. Нева, Санкт-Петербург — 59.93°N, 30.31°E
+        </div>
+        <h1>
+            🎣 ЛЕЩЕВЫЙ КАЛЕНДАРЬ
+            <span>фидер · Нева</span>
+        </h1>
+        <div class="factors-grid" id="factorsGrid">
+            <!-- значения будут подставлены динамически -->
+            <div class="factor-card">
+                <div class="factor-title">🌡️ Температура воздуха</div>
+                <div class="factor-value" id="tempValue">-- °C</div>
+                <div class="trend-icon" id="tempTrend"></div>
+            </div>
+            <div class="factor-card">
+                <div class="factor-title">⏲️ Атм. давление (мм рт. ст)</div>
+                <div class="factor-value" id="pressureValue">--</div>
+                <div class="trend-icon" id="pressureTrend"></div>
+            </div>
+            <div class="factor-card">
+                <div class="factor-title">🌬️ Ветер (м/с)</div>
+                <div class="factor-value" id="windValue">-- м/с</div>
+                <div class="trend-icon" id="windTrend"></div>
+            </div>
+            <div class="factor-card">
+                <div class="factor-title">💧 Облачность / осадки</div>
+                <div class="factor-value" id="cloudValue">-- %</div>
+                <div class="trend-icon" id="cloudIcon">☁️</div>
+            </div>
+        </div>
+
+        <div class="verdict-block" id="verdictBlock">
+            <div class="bite-score">
+                <div class="score-number" id="biteScore">--</div>
+                <div class="score-text" id="biteLabel">Оценка клёва</div>
+            </div>
+            <div class="advice" id="adviceText">
+                Загрузка прогноза...
+            </div>
+        </div>
+    </div>
+
+    <!-- Секция ручной корректировки / симуляция (можно менять параметры и видеть как меняется клев) -->
+    <div class="input-section">
+        <h3 style="margin-bottom: 12px; display: flex; gap:8px;">⚙️ А если погода изменится? <span style="font-size:14px; font-weight:normal;">Покрутите ползунки →</span></h3>
+        <div class="slider-group">
+            <div class="slider-header"><span>🌡️ Температура воздуха (°C)</span> <span id="manualTempVal">+18</span></div>
+            <input type="range" id="tempSlider" min="-5" max="30" value="18" step="1">
+        </div>
+        <div class="slider-group">
+            <div class="slider-header"><span>⏲️ Давление (мм рт. ст)</span> <span id="manualPressVal">760</span></div>
+            <input type="range" id="pressSlider" min="735" max="780" value="760" step="1">
+        </div>
+        <div class="slider-group">
+            <div class="slider-header"><span>🌬️ Скорость ветра (м/с)</span> <span id="manualWindVal">3.0</span></div>
+            <input type="range" id="windSlider" min="0" max="12" value="3" step="0.5">
+        </div>
+        <div class="slider-group">
+            <div class="slider-header"><span>☁️ Облачность + осадки (0 — ясно, 100 — ливень/снег)</span> <span id="manualCloudVal">25</span></div>
+            <input type="range" id="cloudSlider" min="0" max="100" value="25" step="5">
+        </div>
+        <button id="resetRealBtn">↺ Вернуть реальный прогноз (Open‑Meteo)</button>
+        <div class="info-text">
+            🧠 <strong>Как работает оценка?</strong> Лещ на Неве чувствителен к стабильному давлению (750–770 мм.рт.ст.), оптимальная температура +14..+24°C, ветер до 5 м/с и отсутствие затяжных осадков. Чем ближе значения к идеалу + отсутствие резких скачков — тем выше шанс активного клева. Экспериментируйте с ползунками, чтобы понять влияние погоды!
+        </div>
+    </div>
+    <div class="footer-note">
+        📡 Данные в реальном времени через Open‑Meteo (free API, без ключа). Автоматическое обновление каждые 45 минут.
+    </div>
+</div>
+
+<script>
+    // Координаты Питера, центр Невы (примерно у Петропавловки)
+    const LAT = 59.9311;
+    const LON = 30.3609;
+    
+    // DOM элементы
+    const tempSpan = document.getElementById('tempValue');
+    const pressureSpan = document.getElementById('pressureValue');
+    const windSpan = document.getElementById('windValue');
+    const cloudSpan = document.getElementById('cloudValue');
+    const biteScoreSpan = document.getElementById('biteScore');
+    const biteLabelSpan = document.getElementById('biteLabel');
+    const adviceSpan = document.getElementById('adviceText');
+    const tempTrendSpan = document.getElementById('tempTrend');
+    const pressureTrendSpan = document.getElementById('pressureTrend');
+    const windTrendSpan = document.getElementById('windTrend');
+    const cloudIconSpan = document.getElementById('cloudIcon');
+    
+    // сл
+    const tempSlider = document.getElementById('tempSlider');
+    const pressSlider = document.getElementById('pressSlider');
+    const windSlider = document.getElementById('windSlider');
+    const cloudSlider = document.getElementById('cloudSlider');
+    const manualTempVal = document.getElementById('manualTempVal');
+    const manualPressVal = document.getElementById('manualPressVal');
+    const manualWindVal = document.getElementById('manualWindVal');
+    const manualCloudVal = document.getElementById('manualCloudVal');
+    const resetBtn = document.getElementById('resetRealBtn');
+    
+    // храним последний реальный объект погоды
+    let lastRealWeather = null;
+    let useManual = false; // флаг "ручной режим"
+    let manualValues = { temp: 18, pressure: 760, wind: 3.0, cloud: 25 };
+    
+    // ---- функции расчета клева (лещ, река Нева) ----
+    function evaluateBite(tempC, pressureMmhg, windMs, cloudPrecipPercent) {
+        // Идеальные диапазоны:
+        // t = 15..22°C (классика для леща)
+        let tempScore = 0;
+        if (tempC >= 12 && tempC <= 24) {
+            if (tempC >= 15 && tempC <= 22) tempScore = 30;
+            else tempScore = 20;
+        } else if (tempC >= 8 && tempC < 12) tempScore = 12;
+        else if (tempC > 24 && tempC <= 28) tempScore = 12;
+        else if (tempC > 28) tempScore = 5;
+        else if (tempC < 5) tempScore = 2;
+        else tempScore = 8;
+        
+        // Давление: оптимум 748-768, скачки не резкие (но мы просто по текущему, для стабильности хорошо среднее)
+        let pressureScore = 0;
+        if (pressureMmhg >= 748 && pressureMmhg <= 768) {
+            if (pressureMmhg >= 754 && pressureMmhg <= 764) pressureScore = 35;
+            else pressureScore = 25;
+        } else if ((pressureMmhg >= 740 && pressureMmhg < 748) || (pressureMmhg > 768 && pressureMmhg <= 775)) pressureScore = 15;
+        else if (pressureMmhg > 775 || pressureMmhg < 735) pressureScore = 5;
+        else pressureScore = 10;
+        
+        // Ветер: до 4 м/с отлично, до 6 приемлемо
+        let windScore = 0;
+        if (windMs <= 2.5) windScore = 20;
+        else if (windMs <= 4.5) windScore = 18;
+        else if (windMs <= 6) windScore = 10;
+        else if (windMs <= 8) windScore = 4;
+        else windScore = 0;
+        
+        // Облачность/осадки: ясно или небольшая облачность <40% - хорошо, сильные осадки (>60%) + облачность ухудшают
+        let weatherScore = 0;
+        if (cloudPrecipPercent <= 25) weatherScore = 15;
+        else if (cloudPrecipPercent <= 55) weatherScore = 10;
+        else if (cloudPrecipPercent <= 80) weatherScore = 4;
+        else weatherScore = 0;
+        
+        let total = tempScore + pressureScore + windScore + weatherScore;
+        // нормализация по шкале 0-100 (макс: 30+35+20+15=100)
+        total = Math.min(100, Math.max(0, total));
+        
+        let grade = "";
+        let recommendation = "";
+        if (total >= 70) {
+            grade = "🔥 ОТЛИЧНО!";
+            recommendation = "✅ Отличный клёв леща. Берите фидер, червь/кукуруза — дерзайте! Давление стабильно, ветер умеренный.";
+        } else if (total >= 45) {
+            grade = "🎣 СРЕДНИЙ";
+            recommendation = "⚠️ Клев возможен, но капризный. Лучше ловить в утренние часы. Попробуйте ароматику Dunaev Тутти-Фрутти + червь.";
+        } else if (total >= 20) {
+            grade = "🌧️ ПЛОХОЙ";
+            recommendation = "❌ Рыба вялая. Высока вероятность пустых поклевок. Стоит сменить место или подождать стабилизации погоды.";
+        } else {
+            grade = "⛔ МЕРТВЫЙ ШТИЛЬ";
+            recommendation = "🐟 Клева практически не будет. Лещ стоит на месте и не кормится. Попробуйте перловку на самом дне с малым количеством корма.";
+        }
+        
+        return { total, grade, recommendation };
+    }
+    
+    function updateUIFromValues(temp, pressure, wind, cloud) {
+        // отображаем основные параметры
+        tempSpan.innerText = Math.round(temp * 10) / 10 + "°C";
+        pressureSpan.innerText = Math.round(pressure);
+        windSpan.innerText = wind.toFixed(1) + " м/с";
+        cloudSpan.innerText = Math.round(cloud) + "%";
+        
+        // небольшие иконки трендов (понятия тренда нет, условно +- но для настроения)
+        tempTrendSpan.innerHTML = (temp > 18 ? "▲" : (temp < 8 ? "▼" : "●"));
+        pressureTrendSpan.innerHTML = (pressure > 762 ? "↗️" : (pressure < 750 ? "↘️" : "→"));
+        windTrendSpan.innerHTML = (wind > 5 ? "🌬️" : "🍃");
+        if (cloud > 70) cloudIconSpan.innerHTML = "🌧️";
+        else if (cloud > 40) cloudIconSpan.innerHTML = "☁️";
+        else cloudIconSpan.innerHTML = "☀️";
+        
+        const bite = evaluateBite(temp, pressure, wind, cloud);
+        biteScoreSpan.innerText = bite.total;
+        biteLabelSpan.innerText = bite.grade;
+        adviceSpan.innerText = bite.recommendation;
+        
+        // дополнительно визуально акцент
+        const verdictDiv = document.getElementById('verdictBlock');
+        if (bite.total >= 70) {
+            verdictDiv.style.background = "#1f6d49";
+        } else if (bite.total >= 45) {
+            verdictDiv.style.background = "#b46f2c";
+        } else {
+            verdictDiv.style.background = "#3b2c26";
+        }
+    }
+    
+    function syncSlidersAndManual() {
+        manualTempVal.innerText = manualValues.temp;
+        manualPressVal.innerText = manualValues.pressure;
+        manualWindVal.innerText = manualValues.wind.toFixed(1);
+        manualCloudVal.innerText = manualValues.cloud;
+        tempSlider.value = manualValues.temp;
+        pressSlider.value = manualValues.pressure;
+        windSlider.value = manualValues.wind;
+        cloudSlider.value = manualValues.cloud;
+    }
+    
+    function setManualAndRefresh() {
+        useManual = true;
+        manualValues = {
+            temp: parseFloat(tempSlider.value),
+            pressure: parseFloat(pressSlider.value),
+            wind: parseFloat(windSlider.value),
+            cloud: parseFloat(cloudSlider.value)
+        };
+        syncSlidersAndManual();
+        updateUIFromValues(manualValues.temp, manualValues.pressure, manualValues.wind, manualValues.cloud);
+    }
+    
+    // API Open-Meteo (атмосферное давление приводим в мм рт.ст, ветер и т.д)
+    async function fetchRealWeather() {
+        try {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&hourly=temperature_2m,pressure_msl,windspeed_10m,cloudcover&timezone=Europe/Moscow&forecast_days=1`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("API error");
+            const data = await response.json();
+            const current = data.current_weather;
+            const temperature = current.temperature;
+            let pressureMsl = 1013; // fallback
+            let cloudcover = 20;
+            if (data.hourly && data.hourly.time && data.hourly.time.length) {
+                const index0 = 0;
+                if (data.hourly.pressure_msl && data.hourly.pressure_msl[index0]) pressureMsl = data.hourly.pressure_msl[index0];
+                if (data.hourly.cloudcover && data.hourly.cloudcover[index0]) cloudcover = data.hourly.cloudcover[index0];
+            }
+            const pressureMmhg = pressureMsl * 0.750064; // гПа -> мм рт.ст
+            const wind = current.windspeed;
+            const cloudVal = cloudcover;
+            return {
+                temp: temperature,
+                pressure: pressureMmhg,
+                wind: wind,
+                cloud: cloudVal
+            };
+        } catch(e) {
+            console.warn("Open-Meteo fetch error", e);
+            return null;
+        }
+    }
+    
+    async function applyRealWeather() {
+        const weather = await fetchRealWeather();
+        if (weather) {
+            lastRealWeather = weather;
+            useManual = false;
+            manualValues = { ...weather };
+            syncSlidersAndManual();
+            updateUIFromValues(weather.temp, weather.pressure, weather.wind, weather.cloud);
+        } else {
+            // fallback дефолтные средние данные
+            const fallback = { temp: 16, pressure: 758, wind: 2.8, cloud: 30 };
+            lastRealWeather = fallback;
+            useManual = false;
+            manualValues = { ...fallback };
+            syncSlidersAndManual();
+            updateUIFromValues(fallback.temp, fallback.pressure, fallback.wind, fallback.cloud);
+            adviceSpan.innerText = "⚠️ Не удалось загрузить погоду, показаны типичные весенние значения. Потяните ползунки для симуляции.";
+        }
+    }
+    
+    // инициализация событий
+    function initEvents() {
+        tempSlider.addEventListener('input', () => {
+            setManualAndRefresh();
+        });
+        pressSlider.addEventListener('input', () => {
+            setManualAndRefresh();
+        });
+        windSlider.addEventListener('input', () => {
+            setManualAndRefresh();
+        });
+        cloudSlider.addEventListener('input', () => {
+            setManualAndRefresh();
+        });
+        resetBtn.addEventListener('click', async () => {
+            await applyRealWeather();
+        });
+    }
+    
+    // первая загрузка
+    (async function start() {
+        initEvents();
+        await applyRealWeather();
+        // каждые 45 мин автообновление реальной погоды, если не в ручном режиме
+        setInterval(async () => {
+            if (!useManual) {
+                await applyRealWeather();
+            } else {
+                // можно легкий индикатор, что ручной режим активен — ничего не делаем
+                console.log("manual mode active, skip auto-update");
+            }
+        }, 45 * 60 * 1000);
+    })();
+</script>
+</body>
+</html>

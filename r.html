@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Прогноз клёва леща — Нева, СПб | Только факты, без ложного дождя</title>
+    <title>Прогноз клёва леща — Нева, СПб | Visual Crossing</title>
     <style>
         * {
             margin: 0;
@@ -252,8 +252,9 @@
         </div>
         <h1>
             🎣 ЛЕЩЕВЫЙ ПРОГНОЗ
-            <span>фидер · Нева</span>
+            <span>фидер · Visual Crossing</span>
         </h1>
+        
         <div class="factors-grid" id="factorsGrid">
             <div class="factor-card">
                 <div class="factor-title">🌡️ Температура воздуха</div>
@@ -271,8 +272,8 @@
                 <div class="trend-icon" id="windTrend"></div>
             </div>
             <div class="factor-card">
-                <div class="factor-title">💧 Облачность / осадки</div>
-                <div class="factor-value" id="cloudValue">-- / --</div>
+                <div class="factor-title">💧 Осадки</div>
+                <div class="factor-value" id="rainValue">-- %</div>
                 <div class="trend-icon" id="cloudIcon">☀️</div>
             </div>
         </div>
@@ -302,26 +303,36 @@
             <div class="slider-header"><span>🌬️ Скорость ветра (м/с)</span> <span id="manualWindVal">3.0</span></div>
             <input type="range" id="windSlider" min="0" max="12" value="3" step="0.5">
         </div>
-        <button id="resetRealBtn">↺ Вернуть реальный прогноз (Open‑Meteo)</button>
+        <div class="slider-group">
+            <div class="slider-header"><span>🌧️ Вероятность осадков (%)</span> <span id="manualRainVal">10</span></div>
+            <input type="range" id="rainSlider" min="0" max="100" value="10" step="5">
+        </div>
+        <button id="resetRealBtn">↺ Вернуть реальный прогноз (Visual Crossing)</button>
         <div class="info-text">
             🧠 <strong>Как оценивается клёв?</strong> Лещ на Неве любит стабильное давление (750–770 мм), температуру +14..+24°C, ветер до 4 м/с и отсутствие дождя.<br>
-            ☁️ <strong>Что означают цифры "облачность/вероятность":</strong> первая цифра — облачность в %, вторая — вероятность осадков по прогнозу. Но слово "Дождь" пишется ТОЛЬКО если осадки идут прямо сейчас.
+            ☁️ <strong>Осадки от Visual Crossing:</strong> вероятность показывается честно — 100% бывает только когда реально обещают дождь .
         </div>
     </div>
     <div class="footer-note">
-        📡 Данные в реальном времени: Open‑Meteo (free API). Обновление каждые 45 минут.
+        📡 Данные: Visual Crossing Weather API (Free Tier — 1000 запросов/день). Координаты Санкт-Петербурга. Ключ вшит.
     </div>
 </div>
 
 <script>
+    // ============================================================
+    // ВШИТЫЙ API-КЛЮЧ VISUAL CROSSING
+    // ============================================================
+    const API_KEY = "UWVB4Q6S6NUJ3TQLFUL2NQTMP";
+    
+    // Координаты Питера
     const LAT = 59.9311;
     const LON = 30.3609;
     
-    // DOM
+    // DOM элементы
     const tempSpan = document.getElementById('tempValue');
     const pressureSpan = document.getElementById('pressureValue');
     const windSpan = document.getElementById('windValue');
-    const cloudSpan = document.getElementById('cloudValue');
+    const rainSpan = document.getElementById('rainValue');
     const biteScoreSpan = document.getElementById('biteScore');
     const biteLabelSpan = document.getElementById('biteLabel');
     const adviceSpan = document.getElementById('adviceText');
@@ -330,37 +341,31 @@
     const windTrendSpan = document.getElementById('windTrend');
     const cloudIconSpan = document.getElementById('cloudIcon');
     
+    // Слайдеры
     const tempSlider = document.getElementById('tempSlider');
     const pressSlider = document.getElementById('pressSlider');
     const windSlider = document.getElementById('windSlider');
+    const rainSlider = document.getElementById('rainSlider');
     const manualTempVal = document.getElementById('manualTempVal');
     const manualPressVal = document.getElementById('manualPressVal');
     const manualWindVal = document.getElementById('manualWindVal');
+    const manualRainVal = document.getElementById('manualRainVal');
     const resetBtn = document.getElementById('resetRealBtn');
     
     let lastRealWeather = null;
     let useManual = false;
-    let manualValues = { temp: 18, pressure: 760, wind: 3.0, cloud: 25, rainProb: 0, weatherCode: 0 };
+    let manualValues = { temp: 18, pressure: 760, wind: 3.0, rainProb: 10 };
     
-    // Функция перевода weathercode в человеческое описание (идет ли дождь сейчас)
-    function isRainingNow(weatherCode) {
-        // Коды Open-Meteo WMO: 
-        // 61-65 - дождь (разной интенсивности)
-        // 80-82 - ливни
-        // 51-55 - морось (тоже считаем дождем для рыбалки)
-        return (weatherCode >= 51 && weatherCode <= 55) || 
-               (weatherCode >= 61 && weatherCode <= 65) || 
-               (weatherCode >= 80 && weatherCode <= 82);
-    }
-    
-    function getWeatherIcon(cloud, rainProb, isRaining) {
-        if (isRaining) return "🌧️ Дождь";
-        if (cloud > 70) return "☁️ Облачно";
-        if (cloud > 30) return "🌤️ Малооблачно";
+    // Функция получения иконки погоды по вероятности осадков
+    function getWeatherIcon(rainProb) {
+        if (rainProb > 70) return "🌧️ Дождь";
+        if (rainProb > 30) return "☁️ Облачно";
         return "☀️ Ясно";
     }
     
-    function evaluateBite(tempC, pressureMmhg, windMs, rainProb, isRaining) {
+    // Расчёт клёва (0-100)
+    function evaluateBite(tempC, pressureMmhg, windMs, rainProb) {
+        // Температура
         let tempScore = 0;
         if (tempC >= 12 && tempC <= 24) {
             if (tempC >= 15 && tempC <= 22) tempScore = 30;
@@ -371,6 +376,7 @@
         else if (tempC < 5) tempScore = 2;
         else tempScore = 8;
         
+        // Давление
         let pressureScore = 0;
         if (pressureMmhg >= 748 && pressureMmhg <= 768) {
             if (pressureMmhg >= 754 && pressureMmhg <= 764) pressureScore = 35;
@@ -379,6 +385,7 @@
         else if (pressureMmhg > 775 || pressureMmhg < 735) pressureScore = 5;
         else pressureScore = 10;
         
+        // Ветер
         let windScore = 0;
         if (windMs <= 2.5) windScore = 20;
         else if (windMs <= 4.5) windScore = 18;
@@ -386,9 +393,9 @@
         else if (windMs <= 8) windScore = 4;
         else windScore = 0;
         
+        // Осадки
         let rainScore = 0;
-        if (isRaining) rainScore = 0;
-        else if (rainProb <= 20) rainScore = 15;
+        if (rainProb <= 20) rainScore = 15;
         else if (rainProb <= 55) rainScore = 8;
         else rainScore = 2;
         
@@ -413,20 +420,18 @@
         return { total, grade, recommendation };
     }
     
-    function updateUIFromValues(temp, pressure, wind, cloud, rainProb, weatherCode) {
-        const isRaining = isRainingNow(weatherCode);
-        
+    function updateUIFromValues(temp, pressure, wind, rainProb) {
         tempSpan.innerText = Math.round(temp * 10) / 10 + "°C";
         pressureSpan.innerText = Math.round(pressure);
         windSpan.innerText = wind.toFixed(1) + " м/с";
-        cloudSpan.innerText = `${Math.round(cloud)}% / ${Math.round(rainProb)}%`;
+        rainSpan.innerText = Math.round(rainProb) + "%";
         
         tempTrendSpan.innerHTML = (temp > 18 ? "▲" : (temp < 8 ? "▼" : "●"));
         pressureTrendSpan.innerHTML = (pressure > 762 ? "↗️" : (pressure < 750 ? "↘️" : "→"));
         windTrendSpan.innerHTML = (wind > 5 ? "🌬️" : "🍃");
-        cloudIconSpan.innerHTML = getWeatherIcon(cloud, rainProb, isRaining);
+        cloudIconSpan.innerHTML = getWeatherIcon(rainProb);
         
-        const bite = evaluateBite(temp, pressure, wind, rainProb, isRaining);
+        const bite = evaluateBite(temp, pressure, wind, rainProb);
         biteScoreSpan.innerText = bite.total;
         biteLabelSpan.innerText = bite.grade;
         adviceSpan.innerText = bite.recommendation;
@@ -441,43 +446,59 @@
         manualTempVal.innerText = manualValues.temp;
         manualPressVal.innerText = manualValues.pressure;
         manualWindVal.innerText = manualValues.wind.toFixed(1);
+        manualRainVal.innerText = manualValues.rainProb;
         tempSlider.value = manualValues.temp;
         pressSlider.value = manualValues.pressure;
         windSlider.value = manualValues.wind;
+        rainSlider.value = manualValues.rainProb;
     }
     
     function setManualAndRefresh() {
         useManual = true;
-        manualValues.temp = parseFloat(tempSlider.value);
-        manualValues.pressure = parseFloat(pressSlider.value);
-        manualValues.wind = parseFloat(windSlider.value);
+        manualValues = {
+            temp: parseFloat(tempSlider.value),
+            pressure: parseFloat(pressSlider.value),
+            wind: parseFloat(windSlider.value),
+            rainProb: parseFloat(rainSlider.value)
+        };
         syncSlidersAndManual();
-        updateUIFromValues(manualValues.temp, manualValues.pressure, manualValues.wind, manualValues.cloud, manualValues.rainProb, manualValues.weatherCode);
+        updateUIFromValues(manualValues.temp, manualValues.pressure, manualValues.wind, manualValues.rainProb);
     }
     
     async function fetchRealWeather() {
         try {
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&hourly=temperature_2m,pressure_msl,windspeed_10m,cloudcover,precipitation_probability&timezone=Europe/Moscow&forecast_days=1`;
+            // Visual Crossing Timeline API — получение текущих условий 
+            const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${LAT},${LON}/today?unitGroup=metric&include=current&key=${API_KEY}&contentType=json`;
             const response = await fetch(url);
-            if (!response.ok) throw new Error("API error");
-            const data = await response.json();
-            const current = data.current_weather;
-            const temperature = current.temperature;
-            const weatherCode = current.weathercode;
-            let pressureMsl = 1013;
-            let cloudcover = 25;
-            let rainProb = 0;
-            if (data.hourly && data.hourly.time && data.hourly.time.length) {
-                const idx = 0;
-                if (data.hourly.pressure_msl && data.hourly.pressure_msl[idx]) pressureMsl = data.hourly.pressure_msl[idx];
-                if (data.hourly.cloudcover && data.hourly.cloudcover[idx]) cloudcover = data.hourly.cloudcover[idx];
-                if (data.hourly.precipitation_probability && data.hourly.precipitation_probability[idx]) rainProb = data.hourly.precipitation_probability[idx];
+            
+            if (!response.ok) {
+                if (response.status === 401 || response.status === 403) {
+                    throw new Error("Неверный API-ключ. Проверьте ключ Visual Crossing.");
+                }
+                throw new Error(`API error: ${response.status}`);
             }
-            const pressureMmhg = pressureMsl * 0.750064;
-            const wind = current.windspeed;
-            return { temp: temperature, pressure: pressureMmhg, wind: wind, cloud: cloudcover, rainProb: rainProb, weatherCode: weatherCode };
+            
+            const data = await response.json();
+            
+            // Берем currentConditions — это текущая погода 
+            const current = data.currentConditions;
+            if (!current) throw new Error("Нет данных о текущей погоде");
+            
+            const temperature = current.temp;
+            const pressureHpa = current.pressure; // в гектопаскалях
+            const pressureMmhg = pressureHpa * 0.750064; // переводим в мм рт.ст.
+            const windSpeed = current.windspeed;
+            const rainProb = current.precipprob !== undefined ? current.precipprob : (current.precip || 0);
+            
+            return { 
+                temp: temperature, 
+                pressure: pressureMmhg, 
+                wind: windSpeed, 
+                rainProb: rainProb 
+            };
         } catch(e) {
-            console.warn(e);
+            console.warn("Visual Crossing fetch error:", e);
+            adviceSpan.innerText = `⚠️ Ошибка: ${e.message}. Использую демо-режим.`;
             return null;
         }
     }
@@ -489,15 +510,10 @@
             useManual = false;
             manualValues = { ...weather };
             syncSlidersAndManual();
-            updateUIFromValues(weather.temp, weather.pressure, weather.wind, weather.cloud, weather.rainProb, weather.weatherCode);
+            updateUIFromValues(weather.temp, weather.pressure, weather.wind, weather.rainProb);
         } else {
-            const fallback = { temp: 16, pressure: 758, wind: 2.8, cloud: 35, rainProb: 5, weatherCode: 0 };
-            lastRealWeather = fallback;
-            useManual = false;
-            manualValues = { ...fallback };
-            syncSlidersAndManual();
-            updateUIFromValues(fallback.temp, fallback.pressure, fallback.wind, fallback.cloud, fallback.rainProb, fallback.weatherCode);
-            adviceSpan.innerText = "⚠️ Не удалось загрузить погоду, показаны типичные значения. Потяните ползунки для симуляции.";
+            // fallback — типичные значения для СПб
+            updateUIFromValues(16, 758, 2.8, 10);
         }
     }
     
@@ -505,15 +521,17 @@
         tempSlider.addEventListener('input', setManualAndRefresh);
         pressSlider.addEventListener('input', setManualAndRefresh);
         windSlider.addEventListener('input', setManualAndRefresh);
+        rainSlider.addEventListener('input', setManualAndRefresh);
         resetBtn.addEventListener('click', async () => await applyRealWeather());
     }
     
     (async function start() {
         initEvents();
         await applyRealWeather();
+        // Обновление каждый час
         setInterval(async () => {
             if (!useManual) await applyRealWeather();
-        }, 45 * 60 * 1000);
+        }, 60 * 60 * 1000);
     })();
 </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Прогноз клёва леща — Нева, СПб | Давление, температура, осадки</title>
+    <title>Прогноз клёва леща — Нева, СПб | Только факты, без ложного дождя</title>
     <style>
         * {
             margin: 0;
@@ -203,25 +203,6 @@
             border: none;
         }
 
-        .flex-2cols {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 24px;
-            margin-top: 18px;
-            justify-content: space-between;
-        }
-
-        .info-text {
-            background: #eef2f7;
-            border-radius: 28px;
-            padding: 18px 22px;
-            font-size: 0.9rem;
-            line-height: 1.45;
-            color: #2c4e6e;
-            margin-top: 20px;
-            border-left: 5px solid #ffb74d;
-        }
-
         button {
             background: #ffb74d;
             border: none;
@@ -291,7 +272,7 @@
             </div>
             <div class="factor-card">
                 <div class="factor-title">💧 Облачность / осадки</div>
-                <div class="factor-value" id="cloudValue">-- %</div>
+                <div class="factor-value" id="cloudValue">-- / --</div>
                 <div class="trend-icon" id="cloudIcon">☀️</div>
             </div>
         </div>
@@ -321,18 +302,14 @@
             <div class="slider-header"><span>🌬️ Скорость ветра (м/с)</span> <span id="manualWindVal">3.0</span></div>
             <input type="range" id="windSlider" min="0" max="12" value="3" step="0.5">
         </div>
-        <div class="slider-group">
-            <div class="slider-header"><span>🌧️ Вероятность дождя (%)</span> <span id="manualRainVal">10</span></div>
-            <input type="range" id="rainSlider" min="0" max="100" value="10" step="5">
-        </div>
         <button id="resetRealBtn">↺ Вернуть реальный прогноз (Open‑Meteo)</button>
         <div class="info-text">
             🧠 <strong>Как оценивается клёв?</strong> Лещ на Неве любит стабильное давление (750–770 мм), температуру +14..+24°C, ветер до 4 м/с и отсутствие дождя.<br>
-            ☁️ <strong>Облачность больше не считается дождем!</strong> Теперь иконка "Дождь" появляется только при вероятности осадков >30%.
+            ☁️ <strong>Что означают цифры "облачность/вероятность":</strong> первая цифра — облачность в %, вторая — вероятность осадков по прогнозу. Но слово "Дождь" пишется ТОЛЬКО если осадки идут прямо сейчас.
         </div>
     </div>
     <div class="footer-note">
-        📡 Данные в реальном времени: Open‑Meteo (free API). Обновление каждые 45 минут. Погода — для раяна ЦПКО.
+        📡 Данные в реальном времени: Open‑Meteo (free API). Обновление каждые 45 минут.
     </div>
 </div>
 
@@ -356,19 +333,34 @@
     const tempSlider = document.getElementById('tempSlider');
     const pressSlider = document.getElementById('pressSlider');
     const windSlider = document.getElementById('windSlider');
-    const rainSlider = document.getElementById('rainSlider');
     const manualTempVal = document.getElementById('manualTempVal');
     const manualPressVal = document.getElementById('manualPressVal');
     const manualWindVal = document.getElementById('manualWindVal');
-    const manualRainVal = document.getElementById('manualRainVal');
     const resetBtn = document.getElementById('resetRealBtn');
     
     let lastRealWeather = null;
     let useManual = false;
-    let manualValues = { temp: 18, pressure: 760, wind: 3.0, rainProb: 10, cloud: 25 };
+    let manualValues = { temp: 18, pressure: 760, wind: 3.0, cloud: 25, rainProb: 0, weatherCode: 0 };
     
-    // Расчёт клёва (0-100)
-    function evaluateBite(tempC, pressureMmhg, windMs, rainProb) {
+    // Функция перевода weathercode в человеческое описание (идет ли дождь сейчас)
+    function isRainingNow(weatherCode) {
+        // Коды Open-Meteo WMO: 
+        // 61-65 - дождь (разной интенсивности)
+        // 80-82 - ливни
+        // 51-55 - морось (тоже считаем дождем для рыбалки)
+        return (weatherCode >= 51 && weatherCode <= 55) || 
+               (weatherCode >= 61 && weatherCode <= 65) || 
+               (weatherCode >= 80 && weatherCode <= 82);
+    }
+    
+    function getWeatherIcon(cloud, rainProb, isRaining) {
+        if (isRaining) return "🌧️ Дождь";
+        if (cloud > 70) return "☁️ Облачно";
+        if (cloud > 30) return "🌤️ Малооблачно";
+        return "☀️ Ясно";
+    }
+    
+    function evaluateBite(tempC, pressureMmhg, windMs, rainProb, isRaining) {
         let tempScore = 0;
         if (tempC >= 12 && tempC <= 24) {
             if (tempC >= 15 && tempC <= 22) tempScore = 30;
@@ -395,10 +387,10 @@
         else windScore = 0;
         
         let rainScore = 0;
-        if (rainProb <= 20) rainScore = 15;
+        if (isRaining) rainScore = 0;
+        else if (rainProb <= 20) rainScore = 15;
         else if (rainProb <= 55) rainScore = 8;
-        else if (rainProb <= 80) rainScore = 2;
-        else rainScore = 0;
+        else rainScore = 2;
         
         let total = tempScore + pressureScore + windScore + rainScore;
         total = Math.min(100, Math.max(0, total));
@@ -421,26 +413,20 @@
         return { total, grade, recommendation };
     }
     
-    function updateUIFromValues(temp, pressure, wind, cloud, rainProb) {
+    function updateUIFromValues(temp, pressure, wind, cloud, rainProb, weatherCode) {
+        const isRaining = isRainingNow(weatherCode);
+        
         tempSpan.innerText = Math.round(temp * 10) / 10 + "°C";
         pressureSpan.innerText = Math.round(pressure);
         windSpan.innerText = wind.toFixed(1) + " м/с";
-        cloudSpan.innerText = Math.round(cloud) + "%";
+        cloudSpan.innerText = `${Math.round(cloud)}% / ${Math.round(rainProb)}%`;
         
         tempTrendSpan.innerHTML = (temp > 18 ? "▲" : (temp < 8 ? "▼" : "●"));
         pressureTrendSpan.innerHTML = (pressure > 762 ? "↗️" : (pressure < 750 ? "↘️" : "→"));
         windTrendSpan.innerHTML = (wind > 5 ? "🌬️" : "🍃");
+        cloudIconSpan.innerHTML = getWeatherIcon(cloud, rainProb, isRaining);
         
-        // ИСПРАВЛЕННАЯ ЛОГИКА ОБЛАЧНОСТИ/ОСАДКОВ
-        if (rainProb > 30) {
-            cloudIconSpan.innerHTML = "🌧️ Дождь";
-        } else if (cloud > 60) {
-            cloudIconSpan.innerHTML = "☁️ Облачно";
-        } else {
-            cloudIconSpan.innerHTML = "☀️ Ясно";
-        }
-        
-        const bite = evaluateBite(temp, pressure, wind, rainProb);
+        const bite = evaluateBite(temp, pressure, wind, rainProb, isRaining);
         biteScoreSpan.innerText = bite.total;
         biteLabelSpan.innerText = bite.grade;
         adviceSpan.innerText = bite.recommendation;
@@ -455,24 +441,18 @@
         manualTempVal.innerText = manualValues.temp;
         manualPressVal.innerText = manualValues.pressure;
         manualWindVal.innerText = manualValues.wind.toFixed(1);
-        manualRainVal.innerText = manualValues.rainProb;
         tempSlider.value = manualValues.temp;
         pressSlider.value = manualValues.pressure;
         windSlider.value = manualValues.wind;
-        rainSlider.value = manualValues.rainProb;
     }
     
     function setManualAndRefresh() {
         useManual = true;
-        manualValues = {
-            temp: parseFloat(tempSlider.value),
-            pressure: parseFloat(pressSlider.value),
-            wind: parseFloat(windSlider.value),
-            rainProb: parseFloat(rainSlider.value),
-            cloud: manualValues.cloud
-        };
+        manualValues.temp = parseFloat(tempSlider.value);
+        manualValues.pressure = parseFloat(pressSlider.value);
+        manualValues.wind = parseFloat(windSlider.value);
         syncSlidersAndManual();
-        updateUIFromValues(manualValues.temp, manualValues.pressure, manualValues.wind, manualValues.cloud, manualValues.rainProb);
+        updateUIFromValues(manualValues.temp, manualValues.pressure, manualValues.wind, manualValues.cloud, manualValues.rainProb, manualValues.weatherCode);
     }
     
     async function fetchRealWeather() {
@@ -483,9 +463,10 @@
             const data = await response.json();
             const current = data.current_weather;
             const temperature = current.temperature;
+            const weatherCode = current.weathercode;
             let pressureMsl = 1013;
             let cloudcover = 25;
-            let rainProb = 10;
+            let rainProb = 0;
             if (data.hourly && data.hourly.time && data.hourly.time.length) {
                 const idx = 0;
                 if (data.hourly.pressure_msl && data.hourly.pressure_msl[idx]) pressureMsl = data.hourly.pressure_msl[idx];
@@ -494,7 +475,7 @@
             }
             const pressureMmhg = pressureMsl * 0.750064;
             const wind = current.windspeed;
-            return { temp: temperature, pressure: pressureMmhg, wind: wind, cloud: cloudcover, rainProb: rainProb };
+            return { temp: temperature, pressure: pressureMmhg, wind: wind, cloud: cloudcover, rainProb: rainProb, weatherCode: weatherCode };
         } catch(e) {
             console.warn(e);
             return null;
@@ -508,14 +489,14 @@
             useManual = false;
             manualValues = { ...weather };
             syncSlidersAndManual();
-            updateUIFromValues(weather.temp, weather.pressure, weather.wind, weather.cloud, weather.rainProb);
+            updateUIFromValues(weather.temp, weather.pressure, weather.wind, weather.cloud, weather.rainProb, weather.weatherCode);
         } else {
-            const fallback = { temp: 16, pressure: 758, wind: 2.8, cloud: 35, rainProb: 5 };
+            const fallback = { temp: 16, pressure: 758, wind: 2.8, cloud: 35, rainProb: 5, weatherCode: 0 };
             lastRealWeather = fallback;
             useManual = false;
             manualValues = { ...fallback };
             syncSlidersAndManual();
-            updateUIFromValues(fallback.temp, fallback.pressure, fallback.wind, fallback.cloud, fallback.rainProb);
+            updateUIFromValues(fallback.temp, fallback.pressure, fallback.wind, fallback.cloud, fallback.rainProb, fallback.weatherCode);
             adviceSpan.innerText = "⚠️ Не удалось загрузить погоду, показаны типичные значения. Потяните ползунки для симуляции.";
         }
     }
@@ -524,7 +505,6 @@
         tempSlider.addEventListener('input', setManualAndRefresh);
         pressSlider.addEventListener('input', setManualAndRefresh);
         windSlider.addEventListener('input', setManualAndRefresh);
-        rainSlider.addEventListener('input', setManualAndRefresh);
         resetBtn.addEventListener('click', async () => await applyRealWeather());
     }
     

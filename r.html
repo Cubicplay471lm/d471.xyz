@@ -21,63 +21,52 @@
             background-image: 
                 repeating-linear-gradient(45deg, #2a5a3a 0px, #2a5a3a 2px, #1e4a2e 2px, #1e4a2e 8px),
                 radial-gradient(circle at 10% 20%, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%);
+            overflow-x: hidden;
         }
 
-        /* Падающий червяк и леска — чисто для стиля */
-        .fishing-deco {
+        /* Контейнер для полупрозрачных рандомных объектов */
+        .fishing-graphics {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
-            z-index: 1000;
-            opacity: 0.7;
-            transition: all 0.3s ease;
+            z-index: 1;
+            overflow: hidden;
         }
 
-        .worm-hook {
-            font-size: 3.5rem;
-            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
-            animation: gentleSwing 3s ease-in-out infinite;
-            transform-origin: top left;
-            cursor: default;
-        }
-
-        @keyframes gentleSwing {
-            0% { transform: rotate(-5deg) translateY(0px); }
-            50% { transform: rotate(5deg) translateY(4px); }
-            100% { transform: rotate(-5deg) translateY(0px); }
-        }
-
-        .worm-hook:hover {
-            animation: wiggle 0.5s ease-in-out;
-        }
-
-        @keyframes wiggle {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(10deg) scale(1.1); }
-            75% { transform: rotate(-10deg) scale(1.1); }
-        }
-
-        /* Класс для картинки фидера в углу */
-        .feeder-icon {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            font-size: 2.8rem;
-            opacity: 0.6;
-            filter: drop-shadow(0 2px 4px black);
+        .float-item {
+            position: absolute;
+            opacity: 0.2;
+            filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+            animation: slowDrift 20s ease-in-out infinite;
             pointer-events: none;
-            z-index: 1000;
+            will-change: transform;
+        }
+
+        @keyframes slowDrift {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        .float-item:nth-child(odd) {
+            animation-duration: 25s;
+            animation-delay: -5s;
+        }
+
+        .float-item:nth-child(3n) {
+            animation-duration: 18s;
         }
 
         .container {
             max-width: 1250px;
             margin: 0 auto;
             position: relative;
-            z-index: 2;
+            z-index: 10;
         }
 
-        /* карточка с текстурой под старую бумагу и стиль рыбацкого блокнота */
         .weather-panel {
             background: rgba(38, 34, 28, 0.88);
             backdrop-filter: blur(3px);
@@ -86,7 +75,6 @@
             margin-bottom: 30px;
             box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,200,0.1);
             border: 1px solid #b87c4f;
-            transition: 0.2s;
         }
 
         h1 {
@@ -170,9 +158,12 @@
         }
 
         .trend-icon {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             display: inline-block;
             margin-left: 5px;
+            background: #00000055;
+            padding: 2px 8px;
+            border-radius: 20px;
         }
 
         .verdict-block {
@@ -244,7 +235,6 @@
             font-weight: 600;
             color: #eac184;
             font-family: monospace;
-            letter-spacing: 0.5px;
         }
 
         input[type="range"] {
@@ -287,7 +277,6 @@
         button:hover {
             background: #9b7548;
             transform: scale(0.97);
-            border-bottom: 1px solid #3f2c18;
         }
 
         .footer-note {
@@ -316,37 +305,12 @@
             .factor-value {
                 font-size: 1.6rem;
             }
-            .worm-hook {
-                font-size: 2rem;
-                right: 10px;
-                bottom: 10px;
-            }
-            .feeder-icon {
-                font-size: 1.8rem;
-                left: 10px;
-                bottom: 10px;
-            }
-        }
-
-        /* мелочи */
-        .factor-card:hover {
-            transform: translateY(-3px);
-            border-color: #f7bc6c;
-            background: #2d2a22;
         }
     </style>
 </head>
 <body>
 
-<!-- Декоративный червяк на крючке + фидерная стилистика -->
-<div class="fishing-deco">
-    <div class="worm-hook" title="Пучок червей на крючке 🪱">
-        🪱⛓️🪝
-    </div>
-</div>
-<div class="feeder-icon" title="Фидерная кормушка">
-    🧺🎣
-</div>
+<div class="fishing-graphics" id="floatContainer"></div>
 
 <div class="container">
     <div class="weather-panel">
@@ -357,7 +321,7 @@
             🐟 ЛЕЩЕВЫЙ ФИДЕР-ПРОГНОЗ
             <span>лещ · течение · червь</span>
         </h1>
-        <div class="factors-grid" id="factorsGrid">
+        <div class="factors-grid">
             <div class="factor-card">
                 <div class="factor-title">🌡️ Температура воздуха</div>
                 <div class="factor-value" id="tempValue">-- °C</div>
@@ -409,19 +373,75 @@
             <div class="slider-header"><span>🌧️ Вероятность осадков (%)</span> <span id="manualRainVal">10</span></div>
             <input type="range" id="rainSlider" min="0" max="100" value="10" step="5">
         </div>
-        <button id="resetRealBtn">↻ Вернуть реальный прогноз (Visual Crossing) + червь в деле</button>
+        <button id="resetRealBtn">↻ Вернуть реальный прогноз (Visual Crossing)</button>
         <div class="info-text">
             🧠 <strong>Фидерная механика:</strong> Лещ на Неве обожает стабильное давление (750–770 мм), +14..+24°C, ветер до 4–5 м/с и сухую погоду. <br>
-            🪱 <strong>Свисающий червяк</strong> в углу напоминает: лучшая насадка — пучок червей или кукуруза. Держи кормушку на точке!
+            🖼️ <strong>Фоновый улов:</strong> Полупрозрачные черви и кукуруза парят на рандомных позициях — просто атмосфера.
         </div>
     </div>
     <div class="footer-note">
-        📡 Данные: Visual Crossing (1000 запросов/день, твой ключ вшит). Координаты — сердце Невы. Обновление каждый час.
+        📡 Данные: Visual Crossing (твой ключ вшит). Координаты — центр Невы. Обновление каждый час.
     </div>
 </div>
 
 <script>
-    // Вшитый ключ, стиль фидерный, логика клёва
+    // Генерация рандомных SVG червей и кукурузы с прозрачностью
+    function generateFishingGraphics() {
+        const container = document.getElementById('floatContainer');
+        container.innerHTML = '';
+        const itemsCount = 18;  // количество полупрозрачных объектов
+
+        // SVG червяк (извивающийся)
+        const wormSvg = (id) => `
+            <svg width="40" height="28" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 20 Q20 8 30 18 Q40 28 48 20" stroke="#f8a35e" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                <circle cx="10" cy="20" r="3" fill="#e07c3c"/>
+                <circle cx="14" cy="18" r="1.2" fill="#4a2512"/>
+                <path d="M50 18 L55 16 L54 20 Z" fill="#e07c3c"/>
+            </svg>
+        `;
+        
+        // SVG кукурузное зерно
+        const cornSvg = () => `
+            <svg width="34" height="44" viewBox="0 0 40 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <ellipse cx="20" cy="26" rx="14" ry="20" fill="#f7d44a" stroke="#c9921b" stroke-width="1.5"/>
+                <path d="M20 8 L20 44 M12 15 L28 22 M10 28 L30 28 M14 38 L26 32" stroke="#e0a800" stroke-width="1.2" fill="none"/>
+                <ellipse cx="20" cy="26" rx="8" ry="10" fill="#fff0aa" opacity="0.4"/>
+            </svg>
+        `;
+
+        for (let i = 0; i < itemsCount; i++) {
+            const isWorm = Math.random() > 0.5;
+            const div = document.createElement('div');
+            div.className = 'float-item';
+            
+            // случайная позиция в пределах окна
+            const left = Math.random() * 90;
+            const top = Math.random() * 90;
+            const size = 28 + Math.random() * 35;
+            const rotation = Math.random() * 360;
+            const opacityVal = 0.12 + Math.random() * 0.22;
+            const duration = 15 + Math.random() * 20;
+            
+            div.style.left = `${left}%`;
+            div.style.top = `${top}%`;
+            div.style.width = `${size}px`;
+            div.style.height = `${size * (isWorm ? 0.7 : 1.2)}px`;
+            div.style.opacity = opacityVal;
+            div.style.transform = `rotate(${rotation}deg)`;
+            div.style.animation = `slowDrift ${duration}s ease-in-out infinite`;
+            div.style.animationDelay = `${Math.random() * 10}s`;
+            
+            if (isWorm) {
+                div.innerHTML = wormSvg(i);
+            } else {
+                div.innerHTML = cornSvg();
+            }
+            container.appendChild(div);
+        }
+    }
+    
+    // API и логика прогноза
     const API_KEY = "UWVB4Q6S6NUJ3TQLFUL2NQTMP";
     const LAT = 59.9311;
     const LON = 30.3609;
@@ -453,9 +473,9 @@
     let manualValues = { temp: 18, pressure: 760, wind: 3.0, rainProb: 10 };
     
     function getWeatherIcon(rainProb) {
-        if (rainProb > 65) return "🌧️ Дождь (червь смывает)";
-        if (rainProb > 30) return "☁️ Пасмурно, но можно";
-        return "☀️ Ясно — супер клёв";
+        if (rainProb > 65) return "🌧️ дождь";
+        if (rainProb > 30) return "☁️ пасмурно";
+        return "☀️ ясно";
     }
     
     function evaluateBite(tempC, pressureMmhg, windMs, rainProb) {
@@ -492,20 +512,19 @@
         let total = tempScore + pressureScore + windScore + rainScore;
         total = Math.min(100, Math.max(0, total));
         
-        let grade = "";
-        let recommendation = "";
+        let grade = "", recommendation = "";
         if (total >= 75) {
             grade = "🔥 ЖОРА ЛЕЩА!";
-            recommendation = "✅ Бери фидер, пучок червей! Лещ активен, корми смело Dunaev Тутти-Фрутти + кукуруза.";
+            recommendation = "✅ Бери фидер, пучок червей! Лещ активен, корми смело.";
         } else if (total >= 45) {
             grade = "🎣 УМЕРЕННЫЙ";
-            recommendation = "⚠️ Клев есть, но капризный. Утром лучше, используй червь с опарышем, держи кормушку на бровке.";
+            recommendation = "⚠️ Клев есть, но капризный. Утром лучше, червь с опарышем.";
         } else if (total >= 20) {
             grade = "⛈️ ТИХИЙ ЧАС";
-            recommendation = "❌ Лещ стоит пассивно. Погода подвела, меняй горизонт или пробуй перловку с мелассой.";
+            recommendation = "❌ Лещ стоит пассивно. Меняй горизонт или пробуй перловку.";
         } else {
             grade = "⛔ ШТИЛЬ";
-            recommendation = "🐟 Клева почти нет. Остаётся чинить снасти и ждать стабильного давления.";
+            recommendation = "🐟 Клева почти нет. Остаётся чинить снасти.";
         }
         return { total, grade, recommendation };
     }
@@ -597,9 +616,11 @@
     }
     
     (async function start() {
+        generateFishingGraphics();
         initEvents();
         await applyRealWeather();
         setInterval(async () => { if (!useManual) await applyRealWeather(); }, 60 * 60 * 1000);
+        window.addEventListener('resize', () => generateFishingGraphics());
     })();
 </script>
 </body>

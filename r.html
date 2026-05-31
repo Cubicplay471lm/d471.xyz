@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Прогноз клёва леща — Нева, Санкт-Петербург</title>
+    <title>Прогноз клёва леща — Нева, СПб | Давление, температура, осадки</title>
     <style>
         * {
             margin: 0;
@@ -19,13 +19,11 @@
             color: #1a2c3e;
         }
 
-        /* контейнер с эффектом карты/льда */
         .container {
             max-width: 1200px;
             margin: 0 auto;
         }
 
-        /* карточка погоды */
         .weather-panel {
             background: rgba(255, 255, 255, 0.92);
             backdrop-filter: blur(2px);
@@ -161,7 +159,6 @@
             font-weight: 500;
         }
 
-        /* секция с настройкой параметров + описание */
         .input-section {
             background: white;
             border-radius: 44px;
@@ -264,31 +261,19 @@
                 text-align: center;
             }
         }
-
-        .good {
-            border-left: 8px solid #2ecc71;
-        }
-        .normal {
-            border-left: 8px solid #f39c12;
-        }
-        .bad {
-            border-left: 8px solid #e67e22;
-        }
     </style>
 </head>
 <body>
 <div class="container">
-    <!-- Основной блок погоды (реальные данные от Open-Meteo, но с возможностью ручной правки) -->
     <div class="weather-panel" id="weatherPanel">
         <div class="location-badge">
             📍 р. Нева, Санкт-Петербург — 59.93°N, 30.31°E
         </div>
         <h1>
-            🎣 ЛЕЩЕВЫЙ КАЛЕНДАРЬ
+            🎣 ЛЕЩЕВЫЙ ПРОГНОЗ
             <span>фидер · Нева</span>
         </h1>
         <div class="factors-grid" id="factorsGrid">
-            <!-- значения будут подставлены динамически -->
             <div class="factor-card">
                 <div class="factor-title">🌡️ Температура воздуха</div>
                 <div class="factor-value" id="tempValue">-- °C</div>
@@ -307,7 +292,7 @@
             <div class="factor-card">
                 <div class="factor-title">💧 Облачность / осадки</div>
                 <div class="factor-value" id="cloudValue">-- %</div>
-                <div class="trend-icon" id="cloudIcon">☁️</div>
+                <div class="trend-icon" id="cloudIcon">☀️</div>
             </div>
         </div>
 
@@ -322,9 +307,8 @@
         </div>
     </div>
 
-    <!-- Секция ручной корректировки / симуляция (можно менять параметры и видеть как меняется клев) -->
     <div class="input-section">
-        <h3 style="margin-bottom: 12px; display: flex; gap:8px;">⚙️ А если погода изменится? <span style="font-size:14px; font-weight:normal;">Покрутите ползунки →</span></h3>
+        <h3 style="margin-bottom: 12px; display: flex; gap:8px;">⚙️ Ручная симуляция погоды</h3>
         <div class="slider-group">
             <div class="slider-header"><span>🌡️ Температура воздуха (°C)</span> <span id="manualTempVal">+18</span></div>
             <input type="range" id="tempSlider" min="-5" max="30" value="18" step="1">
@@ -338,25 +322,25 @@
             <input type="range" id="windSlider" min="0" max="12" value="3" step="0.5">
         </div>
         <div class="slider-group">
-            <div class="slider-header"><span>☁️ Облачность + осадки (0 — ясно, 100 — ливень/снег)</span> <span id="manualCloudVal">25</span></div>
-            <input type="range" id="cloudSlider" min="0" max="100" value="25" step="5">
+            <div class="slider-header"><span>🌧️ Вероятность дождя (%)</span> <span id="manualRainVal">10</span></div>
+            <input type="range" id="rainSlider" min="0" max="100" value="10" step="5">
         </div>
         <button id="resetRealBtn">↺ Вернуть реальный прогноз (Open‑Meteo)</button>
         <div class="info-text">
-            🧠 <strong>Как работает оценка?</strong> Лещ на Неве чувствителен к стабильному давлению (750–770 мм.рт.ст.), оптимальная температура +14..+24°C, ветер до 5 м/с и отсутствие затяжных осадков. Чем ближе значения к идеалу + отсутствие резких скачков — тем выше шанс активного клева. Экспериментируйте с ползунками, чтобы понять влияние погоды!
+            🧠 <strong>Как оценивается клёв?</strong> Лещ на Неве любит стабильное давление (750–770 мм), температуру +14..+24°C, ветер до 4 м/с и отсутствие дождя.<br>
+            ☁️ <strong>Облачность больше не считается дождем!</strong> Теперь иконка "Дождь" появляется только при вероятности осадков >30%.
         </div>
     </div>
     <div class="footer-note">
-        📡 Данные в реальном времени через Open‑Meteo (free API, без ключа). Автоматическое обновление каждые 45 минут.
+        📡 Данные в реальном времени: Open‑Meteo (free API). Обновление каждые 45 минут. Погода — для раяна ЦПКО.
     </div>
 </div>
 
 <script>
-    // Координаты Питера, центр Невы (примерно у Петропавловки)
     const LAT = 59.9311;
     const LON = 30.3609;
     
-    // DOM элементы
+    // DOM
     const tempSpan = document.getElementById('tempValue');
     const pressureSpan = document.getElementById('pressureValue');
     const windSpan = document.getElementById('windValue');
@@ -369,26 +353,22 @@
     const windTrendSpan = document.getElementById('windTrend');
     const cloudIconSpan = document.getElementById('cloudIcon');
     
-    // сл
     const tempSlider = document.getElementById('tempSlider');
     const pressSlider = document.getElementById('pressSlider');
     const windSlider = document.getElementById('windSlider');
-    const cloudSlider = document.getElementById('cloudSlider');
+    const rainSlider = document.getElementById('rainSlider');
     const manualTempVal = document.getElementById('manualTempVal');
     const manualPressVal = document.getElementById('manualPressVal');
     const manualWindVal = document.getElementById('manualWindVal');
-    const manualCloudVal = document.getElementById('manualCloudVal');
+    const manualRainVal = document.getElementById('manualRainVal');
     const resetBtn = document.getElementById('resetRealBtn');
     
-    // храним последний реальный объект погоды
     let lastRealWeather = null;
-    let useManual = false; // флаг "ручной режим"
-    let manualValues = { temp: 18, pressure: 760, wind: 3.0, cloud: 25 };
+    let useManual = false;
+    let manualValues = { temp: 18, pressure: 760, wind: 3.0, rainProb: 10, cloud: 25 };
     
-    // ---- функции расчета клева (лещ, река Нева) ----
-    function evaluateBite(tempC, pressureMmhg, windMs, cloudPrecipPercent) {
-        // Идеальные диапазоны:
-        // t = 15..22°C (классика для леща)
+    // Расчёт клёва (0-100)
+    function evaluateBite(tempC, pressureMmhg, windMs, rainProb) {
         let tempScore = 0;
         if (tempC >= 12 && tempC <= 24) {
             if (tempC >= 15 && tempC <= 22) tempScore = 30;
@@ -399,7 +379,6 @@
         else if (tempC < 5) tempScore = 2;
         else tempScore = 8;
         
-        // Давление: оптимум 748-768, скачки не резкие (но мы просто по текущему, для стабильности хорошо среднее)
         let pressureScore = 0;
         if (pressureMmhg >= 748 && pressureMmhg <= 768) {
             if (pressureMmhg >= 754 && pressureMmhg <= 764) pressureScore = 35;
@@ -408,7 +387,6 @@
         else if (pressureMmhg > 775 || pressureMmhg < 735) pressureScore = 5;
         else pressureScore = 10;
         
-        // Ветер: до 4 м/с отлично, до 6 приемлемо
         let windScore = 0;
         if (windMs <= 2.5) windScore = 20;
         else if (windMs <= 4.5) windScore = 18;
@@ -416,76 +394,72 @@
         else if (windMs <= 8) windScore = 4;
         else windScore = 0;
         
-        // Облачность/осадки: ясно или небольшая облачность <40% - хорошо, сильные осадки (>60%) + облачность ухудшают
-        let weatherScore = 0;
-        if (cloudPrecipPercent <= 25) weatherScore = 15;
-        else if (cloudPrecipPercent <= 55) weatherScore = 10;
-        else if (cloudPrecipPercent <= 80) weatherScore = 4;
-        else weatherScore = 0;
+        let rainScore = 0;
+        if (rainProb <= 20) rainScore = 15;
+        else if (rainProb <= 55) rainScore = 8;
+        else if (rainProb <= 80) rainScore = 2;
+        else rainScore = 0;
         
-        let total = tempScore + pressureScore + windScore + weatherScore;
-        // нормализация по шкале 0-100 (макс: 30+35+20+15=100)
+        let total = tempScore + pressureScore + windScore + rainScore;
         total = Math.min(100, Math.max(0, total));
         
         let grade = "";
         let recommendation = "";
-        if (total >= 70) {
+        if (total >= 75) {
             grade = "🔥 ОТЛИЧНО!";
             recommendation = "✅ Отличный клёв леща. Берите фидер, червь/кукуруза — дерзайте! Давление стабильно, ветер умеренный.";
         } else if (total >= 45) {
             grade = "🎣 СРЕДНИЙ";
-            recommendation = "⚠️ Клев возможен, но капризный. Лучше ловить в утренние часы. Попробуйте ароматику Dunaev Тутти-Фрутти + червь.";
+            recommendation = "⚠️ Клев возможен, но капризный. Лучше ловить в утренние часы. Попробуйте ароматику + червь.";
         } else if (total >= 20) {
             grade = "🌧️ ПЛОХОЙ";
             recommendation = "❌ Рыба вялая. Высока вероятность пустых поклевок. Стоит сменить место или подождать стабилизации погоды.";
         } else {
-            grade = "⛔ МЕРТВЫЙ ШТИЛЬ";
-            recommendation = "🐟 Клева практически не будет. Лещ стоит на месте и не кормится. Попробуйте перловку на самом дне с малым количеством корма.";
+            grade = "⛔ МЕРТВЫЙ";
+            recommendation = "🐟 Клева практически не будет. Лещ стоит на месте и не кормится.";
         }
-        
         return { total, grade, recommendation };
     }
     
-    function updateUIFromValues(temp, pressure, wind, cloud) {
-        // отображаем основные параметры
+    function updateUIFromValues(temp, pressure, wind, cloud, rainProb) {
         tempSpan.innerText = Math.round(temp * 10) / 10 + "°C";
         pressureSpan.innerText = Math.round(pressure);
         windSpan.innerText = wind.toFixed(1) + " м/с";
         cloudSpan.innerText = Math.round(cloud) + "%";
         
-        // небольшие иконки трендов (понятия тренда нет, условно +- но для настроения)
         tempTrendSpan.innerHTML = (temp > 18 ? "▲" : (temp < 8 ? "▼" : "●"));
         pressureTrendSpan.innerHTML = (pressure > 762 ? "↗️" : (pressure < 750 ? "↘️" : "→"));
         windTrendSpan.innerHTML = (wind > 5 ? "🌬️" : "🍃");
-        if (cloud > 70) cloudIconSpan.innerHTML = "🌧️";
-        else if (cloud > 40) cloudIconSpan.innerHTML = "☁️";
-        else cloudIconSpan.innerHTML = "☀️";
         
-        const bite = evaluateBite(temp, pressure, wind, cloud);
+        // ИСПРАВЛЕННАЯ ЛОГИКА ОБЛАЧНОСТИ/ОСАДКОВ
+        if (rainProb > 30) {
+            cloudIconSpan.innerHTML = "🌧️ Дождь";
+        } else if (cloud > 60) {
+            cloudIconSpan.innerHTML = "☁️ Облачно";
+        } else {
+            cloudIconSpan.innerHTML = "☀️ Ясно";
+        }
+        
+        const bite = evaluateBite(temp, pressure, wind, rainProb);
         biteScoreSpan.innerText = bite.total;
         biteLabelSpan.innerText = bite.grade;
         adviceSpan.innerText = bite.recommendation;
         
-        // дополнительно визуально акцент
         const verdictDiv = document.getElementById('verdictBlock');
-        if (bite.total >= 70) {
-            verdictDiv.style.background = "#1f6d49";
-        } else if (bite.total >= 45) {
-            verdictDiv.style.background = "#b46f2c";
-        } else {
-            verdictDiv.style.background = "#3b2c26";
-        }
+        if (bite.total >= 75) verdictDiv.style.background = "#1f6d49";
+        else if (bite.total >= 45) verdictDiv.style.background = "#b46f2c";
+        else verdictDiv.style.background = "#3b2c26";
     }
     
     function syncSlidersAndManual() {
         manualTempVal.innerText = manualValues.temp;
         manualPressVal.innerText = manualValues.pressure;
         manualWindVal.innerText = manualValues.wind.toFixed(1);
-        manualCloudVal.innerText = manualValues.cloud;
+        manualRainVal.innerText = manualValues.rainProb;
         tempSlider.value = manualValues.temp;
         pressSlider.value = manualValues.pressure;
         windSlider.value = manualValues.wind;
-        cloudSlider.value = manualValues.cloud;
+        rainSlider.value = manualValues.rainProb;
     }
     
     function setManualAndRefresh() {
@@ -494,39 +468,35 @@
             temp: parseFloat(tempSlider.value),
             pressure: parseFloat(pressSlider.value),
             wind: parseFloat(windSlider.value),
-            cloud: parseFloat(cloudSlider.value)
+            rainProb: parseFloat(rainSlider.value),
+            cloud: manualValues.cloud
         };
         syncSlidersAndManual();
-        updateUIFromValues(manualValues.temp, manualValues.pressure, manualValues.wind, manualValues.cloud);
+        updateUIFromValues(manualValues.temp, manualValues.pressure, manualValues.wind, manualValues.cloud, manualValues.rainProb);
     }
     
-    // API Open-Meteo (атмосферное давление приводим в мм рт.ст, ветер и т.д)
     async function fetchRealWeather() {
         try {
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&hourly=temperature_2m,pressure_msl,windspeed_10m,cloudcover&timezone=Europe/Moscow&forecast_days=1`;
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current_weather=true&hourly=temperature_2m,pressure_msl,windspeed_10m,cloudcover,precipitation_probability&timezone=Europe/Moscow&forecast_days=1`;
             const response = await fetch(url);
             if (!response.ok) throw new Error("API error");
             const data = await response.json();
             const current = data.current_weather;
             const temperature = current.temperature;
-            let pressureMsl = 1013; // fallback
-            let cloudcover = 20;
+            let pressureMsl = 1013;
+            let cloudcover = 25;
+            let rainProb = 10;
             if (data.hourly && data.hourly.time && data.hourly.time.length) {
-                const index0 = 0;
-                if (data.hourly.pressure_msl && data.hourly.pressure_msl[index0]) pressureMsl = data.hourly.pressure_msl[index0];
-                if (data.hourly.cloudcover && data.hourly.cloudcover[index0]) cloudcover = data.hourly.cloudcover[index0];
+                const idx = 0;
+                if (data.hourly.pressure_msl && data.hourly.pressure_msl[idx]) pressureMsl = data.hourly.pressure_msl[idx];
+                if (data.hourly.cloudcover && data.hourly.cloudcover[idx]) cloudcover = data.hourly.cloudcover[idx];
+                if (data.hourly.precipitation_probability && data.hourly.precipitation_probability[idx]) rainProb = data.hourly.precipitation_probability[idx];
             }
-            const pressureMmhg = pressureMsl * 0.750064; // гПа -> мм рт.ст
+            const pressureMmhg = pressureMsl * 0.750064;
             const wind = current.windspeed;
-            const cloudVal = cloudcover;
-            return {
-                temp: temperature,
-                pressure: pressureMmhg,
-                wind: wind,
-                cloud: cloudVal
-            };
+            return { temp: temperature, pressure: pressureMmhg, wind: wind, cloud: cloudcover, rainProb: rainProb };
         } catch(e) {
-            console.warn("Open-Meteo fetch error", e);
+            console.warn(e);
             return null;
         }
     }
@@ -538,50 +508,31 @@
             useManual = false;
             manualValues = { ...weather };
             syncSlidersAndManual();
-            updateUIFromValues(weather.temp, weather.pressure, weather.wind, weather.cloud);
+            updateUIFromValues(weather.temp, weather.pressure, weather.wind, weather.cloud, weather.rainProb);
         } else {
-            // fallback дефолтные средние данные
-            const fallback = { temp: 16, pressure: 758, wind: 2.8, cloud: 30 };
+            const fallback = { temp: 16, pressure: 758, wind: 2.8, cloud: 35, rainProb: 5 };
             lastRealWeather = fallback;
             useManual = false;
             manualValues = { ...fallback };
             syncSlidersAndManual();
-            updateUIFromValues(fallback.temp, fallback.pressure, fallback.wind, fallback.cloud);
-            adviceSpan.innerText = "⚠️ Не удалось загрузить погоду, показаны типичные весенние значения. Потяните ползунки для симуляции.";
+            updateUIFromValues(fallback.temp, fallback.pressure, fallback.wind, fallback.cloud, fallback.rainProb);
+            adviceSpan.innerText = "⚠️ Не удалось загрузить погоду, показаны типичные значения. Потяните ползунки для симуляции.";
         }
     }
     
-    // инициализация событий
     function initEvents() {
-        tempSlider.addEventListener('input', () => {
-            setManualAndRefresh();
-        });
-        pressSlider.addEventListener('input', () => {
-            setManualAndRefresh();
-        });
-        windSlider.addEventListener('input', () => {
-            setManualAndRefresh();
-        });
-        cloudSlider.addEventListener('input', () => {
-            setManualAndRefresh();
-        });
-        resetBtn.addEventListener('click', async () => {
-            await applyRealWeather();
-        });
+        tempSlider.addEventListener('input', setManualAndRefresh);
+        pressSlider.addEventListener('input', setManualAndRefresh);
+        windSlider.addEventListener('input', setManualAndRefresh);
+        rainSlider.addEventListener('input', setManualAndRefresh);
+        resetBtn.addEventListener('click', async () => await applyRealWeather());
     }
     
-    // первая загрузка
     (async function start() {
         initEvents();
         await applyRealWeather();
-        // каждые 45 мин автообновление реальной погоды, если не в ручном режиме
         setInterval(async () => {
-            if (!useManual) {
-                await applyRealWeather();
-            } else {
-                // можно легкий индикатор, что ручной режим активен — ничего не делаем
-                console.log("manual mode active, skip auto-update");
-            }
+            if (!useManual) await applyRealWeather();
         }, 45 * 60 * 1000);
     })();
 </script>

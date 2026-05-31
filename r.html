@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Прогноз клёва леща — Нева, СПб | Visual Crossing</title>
+    <title>Фидерный прогноз клёва леща — Нева, СПб</title>
     <style>
         * {
             margin: 0;
@@ -12,163 +12,229 @@
         }
 
         body {
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-            background: linear-gradient(145deg, #cfe3f9 0%, #b0c8e8 100%);
+            font-family: 'Segoe UI', 'Roboto', system-ui, -apple-system, monospace;
+            background: #1a3f2c;
             min-height: 100vh;
             padding: 20px;
-            color: #1a2c3e;
+            color: #ece9d8;
+            position: relative;
+            background-image: 
+                repeating-linear-gradient(45deg, #2a5a3a 0px, #2a5a3a 2px, #1e4a2e 2px, #1e4a2e 8px),
+                radial-gradient(circle at 10% 20%, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%);
+        }
+
+        /* Падающий червяк и леска — чисто для стиля */
+        .fishing-deco {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .worm-hook {
+            font-size: 3.5rem;
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+            animation: gentleSwing 3s ease-in-out infinite;
+            transform-origin: top left;
+            cursor: default;
+        }
+
+        @keyframes gentleSwing {
+            0% { transform: rotate(-5deg) translateY(0px); }
+            50% { transform: rotate(5deg) translateY(4px); }
+            100% { transform: rotate(-5deg) translateY(0px); }
+        }
+
+        .worm-hook:hover {
+            animation: wiggle 0.5s ease-in-out;
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(10deg) scale(1.1); }
+            75% { transform: rotate(-10deg) scale(1.1); }
+        }
+
+        /* Класс для картинки фидера в углу */
+        .feeder-icon {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 2.8rem;
+            opacity: 0.6;
+            filter: drop-shadow(0 2px 4px black);
+            pointer-events: none;
+            z-index: 1000;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1250px;
             margin: 0 auto;
+            position: relative;
+            z-index: 2;
         }
 
+        /* карточка с текстурой под старую бумагу и стиль рыбацкого блокнота */
         .weather-panel {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(2px);
-            border-radius: 48px;
-            padding: 24px 28px;
-            margin-bottom: 28px;
-            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255,255,240,0.7);
+            background: rgba(38, 34, 28, 0.88);
+            backdrop-filter: blur(3px);
+            border-radius: 32px;
+            padding: 28px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,200,0.1);
+            border: 1px solid #b87c4f;
+            transition: 0.2s;
         }
 
         h1 {
-            font-size: 1.9rem;
-            font-weight: 600;
-            letter-spacing: -0.3px;
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
             flex-wrap: wrap;
             justify-content: space-between;
-            border-bottom: 2px solid #2c6e9e30;
-            padding-bottom: 14px;
+            border-bottom: 2px solid #e0a878;
+            padding-bottom: 12px;
             margin-bottom: 24px;
+            text-shadow: 2px 2px 0 #1e2a1a;
+            font-family: 'Courier New', 'Segoe UI', monospace;
         }
 
         h1 span {
-            background: #1e4a6b;
-            color: white;
+            background: #00000066;
+            backdrop-filter: blur(4px);
+            color: #ffdd99;
             font-size: 0.9rem;
             font-weight: normal;
-            padding: 6px 16px;
+            padding: 8px 20px;
             border-radius: 60px;
-            letter-spacing: 0.3px;
+            letter-spacing: 1px;
+            font-family: monospace;
+            border: 1px solid #dba459;
         }
 
         .location-badge {
-            background: #eef4ff;
+            background: #2a241bb3;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 6px 18px;
-            border-radius: 40px;
-            font-size: 0.95rem;
+            gap: 10px;
+            padding: 6px 20px;
+            border-radius: 60px;
+            font-size: 0.9rem;
             font-weight: 500;
-            color: #155f8c;
-            margin-bottom: 16px;
+            color: #f7dba7;
+            border-left: 4px solid #f5b642;
+            margin-bottom: 20px;
+            font-family: monospace;
         }
 
         .factors-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 18px;
-            margin: 28px 0 20px;
+            gap: 20px;
+            margin: 32px 0 24px;
         }
 
         .factor-card {
-            background: #f0f6fe;
-            border-radius: 32px;
-            padding: 18px 14px;
+            background: #21201cee;
+            border-radius: 28px;
+            padding: 20px 14px;
             text-align: center;
             transition: all 0.2s ease;
-            border: 1px solid #cbddee;
+            border: 1px solid #c1945b;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.2), 0 5px 10px rgba(0,0,0,0.3);
         }
 
         .factor-title {
             font-size: 0.85rem;
             text-transform: uppercase;
             font-weight: 600;
-            letter-spacing: 1px;
-            color: #2b6c9e;
-            margin-bottom: 10px;
+            letter-spacing: 2px;
+            color: #eec48e;
+            margin-bottom: 12px;
+            font-family: monospace;
         }
 
         .factor-value {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #0a2f44;
+            font-size: 2.3rem;
+            font-weight: 800;
+            color: #ffe0a3;
             line-height: 1;
-            margin-bottom: 6px;
-        }
-
-        .factor-unit {
-            font-size: 0.85rem;
-            font-weight: normal;
-            color: #4b6f8c;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 2px black;
         }
 
         .trend-icon {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             display: inline-block;
-            margin-left: 6px;
+            margin-left: 5px;
         }
 
         .verdict-block {
-            background: #1e3a4d;
-            border-radius: 44px;
-            padding: 24px 28px;
+            background: #1d2c1be0;
+            border-radius: 48px;
+            padding: 24px 30px;
             margin-top: 20px;
-            color: white;
+            color: #f2e2c6;
             display: flex;
             flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
             gap: 16px;
+            border: 1px solid #e1b070;
+            box-shadow: 0 8px 18px black;
         }
 
         .bite-score {
             display: flex;
             align-items: baseline;
-            gap: 12px;
+            gap: 15px;
             flex-wrap: wrap;
         }
 
         .score-number {
-            font-size: 3.5rem;
+            font-size: 3.6rem;
             font-weight: 800;
-            background: #ffcd7e;
-            color: #1e3a4d;
-            padding: 5px 20px;
+            background: #000000aa;
+            color: #ffd966;
+            padding: 4px 20px;
             border-radius: 60px;
             line-height: 1;
+            font-family: monospace;
+            border: 1px solid #f5bc70;
         }
 
         .score-text {
-            font-size: 1.4rem;
-            font-weight: 600;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
 
         .advice {
-            font-size: 1.1rem;
-            background: rgba(255,255,210,0.15);
-            padding: 10px 22px;
-            border-radius: 50px;
+            font-size: 1rem;
+            background: #141e10b3;
+            padding: 12px 26px;
+            border-radius: 60px;
             font-weight: 500;
+            border-left: 3px solid #ffb347;
         }
 
         .input-section {
-            background: white;
-            border-radius: 44px;
+            background: #231f1ad9;
+            border-radius: 42px;
             padding: 24px 28px;
             margin-top: 20px;
-            box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+            border: 1px solid #b68046;
+            backdrop-filter: blur(2px);
         }
 
         .slider-group {
-            margin-bottom: 28px;
+            margin-bottom: 26px;
         }
 
         .slider-header {
@@ -176,85 +242,121 @@
             justify-content: space-between;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #1f5e85;
+            color: #eac184;
+            font-family: monospace;
+            letter-spacing: 0.5px;
         }
 
         input[type="range"] {
             width: 100%;
             height: 6px;
             -webkit-appearance: none;
-            background: #cbe0f0;
+            background: #4c3b28;
             border-radius: 10px;
-            outline: none;
-        }
-
-        input[type="range"]:focus {
             outline: none;
         }
 
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            background: #2c7cb6;
+            width: 22px;
+            height: 22px;
+            background: #e6b157;
             border-radius: 50%;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            border: none;
+            box-shadow: 0 2px 8px black;
+            border: 1px solid #362812;
         }
 
         button {
-            background: #ffb74d;
+            background: #7a5d3c;
             border: none;
-            padding: 12px 28px;
-            border-radius: 44px;
+            padding: 14px 28px;
+            border-radius: 60px;
             font-weight: bold;
             font-size: 1rem;
-            color: #1e3a4d;
+            color: #f4efcf;
             cursor: pointer;
             transition: 0.2s;
-            margin-top: 12px;
+            margin-top: 16px;
             width: 100%;
             font-weight: 600;
+            letter-spacing: 1px;
+            border-bottom: 3px solid #3f2c18;
         }
 
         button:hover {
-            background: #ffa01e;
-            transform: scale(0.98);
+            background: #9b7548;
+            transform: scale(0.97);
+            border-bottom: 1px solid #3f2c18;
         }
 
         .footer-note {
             text-align: center;
-            margin-top: 24px;
-            font-size: 0.75rem;
-            color: #2c577c;
+            margin-top: 28px;
+            font-size: 0.7rem;
+            color: #bcb08b;
+            font-family: monospace;
+        }
+
+        .info-text {
+            background: #1b2819b3;
+            border-radius: 28px;
+            padding: 14px 20px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: #e2d5b6;
+            margin-top: 20px;
+            border-left: 6px solid #e3a345;
         }
 
         @media (max-width: 650px) {
             .weather-panel, .input-section {
-                padding: 18px;
+                padding: 16px;
             }
             .factor-value {
-                font-size: 1.7rem;
+                font-size: 1.6rem;
             }
-            .verdict-block {
-                flex-direction: column;
-                text-align: center;
+            .worm-hook {
+                font-size: 2rem;
+                right: 10px;
+                bottom: 10px;
             }
+            .feeder-icon {
+                font-size: 1.8rem;
+                left: 10px;
+                bottom: 10px;
+            }
+        }
+
+        /* мелочи */
+        .factor-card:hover {
+            transform: translateY(-3px);
+            border-color: #f7bc6c;
+            background: #2d2a22;
         }
     </style>
 </head>
 <body>
+
+<!-- Декоративный червяк на крючке + фидерная стилистика -->
+<div class="fishing-deco">
+    <div class="worm-hook" title="Пучок червей на крючке 🪱">
+        🪱⛓️🪝
+    </div>
+</div>
+<div class="feeder-icon" title="Фидерная кормушка">
+    🧺🎣
+</div>
+
 <div class="container">
-    <div class="weather-panel" id="weatherPanel">
+    <div class="weather-panel">
         <div class="location-badge">
-            📍 р. Нева, Санкт-Петербург — 59.93°N, 30.31°E
+            🎣 р. Нева, Санкт-Петербург — 59.93°N, 30.31°E • фидерная зона
         </div>
         <h1>
-            🎣 ЛЕЩЕВЫЙ ПРОГНОЗ
-            <span>фидер · Visual Crossing</span>
+            🐟 ЛЕЩЕВЫЙ ФИДЕР-ПРОГНОЗ
+            <span>лещ · течение · червь</span>
         </h1>
-        
         <div class="factors-grid" id="factorsGrid">
             <div class="factor-card">
                 <div class="factor-title">🌡️ Температура воздуха</div>
@@ -272,7 +374,7 @@
                 <div class="trend-icon" id="windTrend"></div>
             </div>
             <div class="factor-card">
-                <div class="factor-title">💧 Осадки</div>
+                <div class="factor-title">💧 Осадки / дождь</div>
                 <div class="factor-value" id="rainValue">-- %</div>
                 <div class="trend-icon" id="cloudIcon">☀️</div>
             </div>
@@ -281,16 +383,16 @@
         <div class="verdict-block" id="verdictBlock">
             <div class="bite-score">
                 <div class="score-number" id="biteScore">--</div>
-                <div class="score-text" id="biteLabel">Оценка клёва</div>
+                <div class="score-text" id="biteLabel">Клёв леща</div>
             </div>
             <div class="advice" id="adviceText">
-                Загрузка прогноза...
+                🔄 загружаем прогноз...
             </div>
         </div>
     </div>
 
     <div class="input-section">
-        <h3 style="margin-bottom: 12px; display: flex; gap:8px;">⚙️ Ручная симуляция погоды</h3>
+        <h3 style="margin-bottom: 16px; display: flex; gap: 12px; font-family: monospace;">⚙️ 🎣 Покрути снасти (симуляция погоды)</h3>
         <div class="slider-group">
             <div class="slider-header"><span>🌡️ Температура воздуха (°C)</span> <span id="manualTempVal">+18</span></div>
             <input type="range" id="tempSlider" min="-5" max="30" value="18" step="1">
@@ -307,28 +409,23 @@
             <div class="slider-header"><span>🌧️ Вероятность осадков (%)</span> <span id="manualRainVal">10</span></div>
             <input type="range" id="rainSlider" min="0" max="100" value="10" step="5">
         </div>
-        <button id="resetRealBtn">↺ Вернуть реальный прогноз (Visual Crossing)</button>
+        <button id="resetRealBtn">↻ Вернуть реальный прогноз (Visual Crossing) + червь в деле</button>
         <div class="info-text">
-            🧠 <strong>Как оценивается клёв?</strong> Лещ на Неве любит стабильное давление (750–770 мм), температуру +14..+24°C, ветер до 4 м/с и отсутствие дождя.<br>
-            ☁️ <strong>Осадки от Visual Crossing:</strong> вероятность показывается честно — 100% бывает только когда реально обещают дождь .
+            🧠 <strong>Фидерная механика:</strong> Лещ на Неве обожает стабильное давление (750–770 мм), +14..+24°C, ветер до 4–5 м/с и сухую погоду. <br>
+            🪱 <strong>Свисающий червяк</strong> в углу напоминает: лучшая насадка — пучок червей или кукуруза. Держи кормушку на точке!
         </div>
     </div>
     <div class="footer-note">
-        📡 Данные: Visual Crossing Weather API (Free Tier — 1000 запросов/день). Координаты Санкт-Петербурга. Ключ вшит.
+        📡 Данные: Visual Crossing (1000 запросов/день, твой ключ вшит). Координаты — сердце Невы. Обновление каждый час.
     </div>
 </div>
 
 <script>
-    // ============================================================
-    // ВШИТЫЙ API-КЛЮЧ VISUAL CROSSING
-    // ============================================================
+    // Вшитый ключ, стиль фидерный, логика клёва
     const API_KEY = "UWVB4Q6S6NUJ3TQLFUL2NQTMP";
-    
-    // Координаты Питера
     const LAT = 59.9311;
     const LON = 30.3609;
     
-    // DOM элементы
     const tempSpan = document.getElementById('tempValue');
     const pressureSpan = document.getElementById('pressureValue');
     const windSpan = document.getElementById('windValue');
@@ -341,7 +438,6 @@
     const windTrendSpan = document.getElementById('windTrend');
     const cloudIconSpan = document.getElementById('cloudIcon');
     
-    // Слайдеры
     const tempSlider = document.getElementById('tempSlider');
     const pressSlider = document.getElementById('pressSlider');
     const windSlider = document.getElementById('windSlider');
@@ -356,16 +452,13 @@
     let useManual = false;
     let manualValues = { temp: 18, pressure: 760, wind: 3.0, rainProb: 10 };
     
-    // Функция получения иконки погоды по вероятности осадков
     function getWeatherIcon(rainProb) {
-        if (rainProb > 70) return "🌧️ Дождь";
-        if (rainProb > 30) return "☁️ Облачно";
-        return "☀️ Ясно";
+        if (rainProb > 65) return "🌧️ Дождь (червь смывает)";
+        if (rainProb > 30) return "☁️ Пасмурно, но можно";
+        return "☀️ Ясно — супер клёв";
     }
     
-    // Расчёт клёва (0-100)
     function evaluateBite(tempC, pressureMmhg, windMs, rainProb) {
-        // Температура
         let tempScore = 0;
         if (tempC >= 12 && tempC <= 24) {
             if (tempC >= 15 && tempC <= 22) tempScore = 30;
@@ -376,7 +469,6 @@
         else if (tempC < 5) tempScore = 2;
         else tempScore = 8;
         
-        // Давление
         let pressureScore = 0;
         if (pressureMmhg >= 748 && pressureMmhg <= 768) {
             if (pressureMmhg >= 754 && pressureMmhg <= 764) pressureScore = 35;
@@ -385,7 +477,6 @@
         else if (pressureMmhg > 775 || pressureMmhg < 735) pressureScore = 5;
         else pressureScore = 10;
         
-        // Ветер
         let windScore = 0;
         if (windMs <= 2.5) windScore = 20;
         else if (windMs <= 4.5) windScore = 18;
@@ -393,7 +484,6 @@
         else if (windMs <= 8) windScore = 4;
         else windScore = 0;
         
-        // Осадки
         let rainScore = 0;
         if (rainProb <= 20) rainScore = 15;
         else if (rainProb <= 55) rainScore = 8;
@@ -405,17 +495,17 @@
         let grade = "";
         let recommendation = "";
         if (total >= 75) {
-            grade = "🔥 ОТЛИЧНО!";
-            recommendation = "✅ Отличный клёв леща. Берите фидер, червь/кукуруза — дерзайте! Давление стабильно, ветер умеренный.";
+            grade = "🔥 ЖОРА ЛЕЩА!";
+            recommendation = "✅ Бери фидер, пучок червей! Лещ активен, корми смело Dunaev Тутти-Фрутти + кукуруза.";
         } else if (total >= 45) {
-            grade = "🎣 СРЕДНИЙ";
-            recommendation = "⚠️ Клев возможен, но капризный. Лучше ловить в утренние часы. Попробуйте ароматику + червь.";
+            grade = "🎣 УМЕРЕННЫЙ";
+            recommendation = "⚠️ Клев есть, но капризный. Утром лучше, используй червь с опарышем, держи кормушку на бровке.";
         } else if (total >= 20) {
-            grade = "🌧️ ПЛОХОЙ";
-            recommendation = "❌ Рыба вялая. Высока вероятность пустых поклевок. Стоит сменить место или подождать стабилизации погоды.";
+            grade = "⛈️ ТИХИЙ ЧАС";
+            recommendation = "❌ Лещ стоит пассивно. Погода подвела, меняй горизонт или пробуй перловку с мелассой.";
         } else {
-            grade = "⛔ МЕРТВЫЙ";
-            recommendation = "🐟 Клева практически не будет. Лещ стоит на месте и не кормится.";
+            grade = "⛔ ШТИЛЬ";
+            recommendation = "🐟 Клева почти нет. Остаётся чинить снасти и ждать стабильного давления.";
         }
         return { total, grade, recommendation };
     }
@@ -425,10 +515,9 @@
         pressureSpan.innerText = Math.round(pressure);
         windSpan.innerText = wind.toFixed(1) + " м/с";
         rainSpan.innerText = Math.round(rainProb) + "%";
-        
-        tempTrendSpan.innerHTML = (temp > 18 ? "▲" : (temp < 8 ? "▼" : "●"));
-        pressureTrendSpan.innerHTML = (pressure > 762 ? "↗️" : (pressure < 750 ? "↘️" : "→"));
-        windTrendSpan.innerHTML = (wind > 5 ? "🌬️" : "🍃");
+        tempTrendSpan.innerHTML = (temp > 18 ? "▲ теплеет" : (temp < 8 ? "▼ холод" : "● стаб"));
+        pressureTrendSpan.innerHTML = (pressure > 762 ? "↗️ высокое" : (pressure < 750 ? "↘️ низкое" : "→ норма"));
+        windTrendSpan.innerHTML = (wind > 5 ? "🌬️ сильный" : "🍃 ветер норм");
         cloudIconSpan.innerHTML = getWeatherIcon(rainProb);
         
         const bite = evaluateBite(temp, pressure, wind, rainProb);
@@ -437,9 +526,9 @@
         adviceSpan.innerText = bite.recommendation;
         
         const verdictDiv = document.getElementById('verdictBlock');
-        if (bite.total >= 75) verdictDiv.style.background = "#1f6d49";
-        else if (bite.total >= 45) verdictDiv.style.background = "#b46f2c";
-        else verdictDiv.style.background = "#3b2c26";
+        if (bite.total >= 75) verdictDiv.style.background = "#1e5a36f0";
+        else if (bite.total >= 45) verdictDiv.style.background = "#8b6946e0";
+        else verdictDiv.style.background = "#3c2c1ed9";
     }
     
     function syncSlidersAndManual() {
@@ -467,38 +556,21 @@
     
     async function fetchRealWeather() {
         try {
-            // Visual Crossing Timeline API — получение текущих условий 
             const url = `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${LAT},${LON}/today?unitGroup=metric&include=current&key=${API_KEY}&contentType=json`;
             const response = await fetch(url);
-            
-            if (!response.ok) {
-                if (response.status === 401 || response.status === 403) {
-                    throw new Error("Неверный API-ключ. Проверьте ключ Visual Crossing.");
-                }
-                throw new Error(`API error: ${response.status}`);
-            }
-            
+            if (!response.ok) throw new Error(`API error ${response.status}`);
             const data = await response.json();
-            
-            // Берем currentConditions — это текущая погода 
             const current = data.currentConditions;
-            if (!current) throw new Error("Нет данных о текущей погоде");
-            
+            if (!current) throw new Error("Нет условий");
             const temperature = current.temp;
-            const pressureHpa = current.pressure; // в гектопаскалях
-            const pressureMmhg = pressureHpa * 0.750064; // переводим в мм рт.ст.
+            const pressureHpa = current.pressure;
+            const pressureMmhg = pressureHpa * 0.750064;
             const windSpeed = current.windspeed;
             const rainProb = current.precipprob !== undefined ? current.precipprob : (current.precip || 0);
-            
-            return { 
-                temp: temperature, 
-                pressure: pressureMmhg, 
-                wind: windSpeed, 
-                rainProb: rainProb 
-            };
+            return { temp: temperature, pressure: pressureMmhg, wind: windSpeed, rainProb: rainProb };
         } catch(e) {
-            console.warn("Visual Crossing fetch error:", e);
-            adviceSpan.innerText = `⚠️ Ошибка: ${e.message}. Использую демо-режим.`;
+            console.warn(e);
+            adviceSpan.innerText = `⚠️ Ошибка погоды: ${e.message}. Потяни ползунки вручную.`;
             return null;
         }
     }
@@ -512,8 +584,7 @@
             syncSlidersAndManual();
             updateUIFromValues(weather.temp, weather.pressure, weather.wind, weather.rainProb);
         } else {
-            // fallback — типичные значения для СПб
-            updateUIFromValues(16, 758, 2.8, 10);
+            updateUIFromValues(15, 760, 2.5, 12);
         }
     }
     
@@ -528,10 +599,7 @@
     (async function start() {
         initEvents();
         await applyRealWeather();
-        // Обновление каждый час
-        setInterval(async () => {
-            if (!useManual) await applyRealWeather();
-        }, 60 * 60 * 1000);
+        setInterval(async () => { if (!useManual) await applyRealWeather(); }, 60 * 60 * 1000);
     })();
 </script>
 </body>
